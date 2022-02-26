@@ -6,11 +6,11 @@ import {
 } from '@aws-sdk/client-s3';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 import { Readable } from 'stream';
+import { v4 as uuidV4 } from 'uuid';
 import { CommonService } from '../common/common.service';
 import { FileUploadDto } from './dtos/file-upload.dto';
-import { v4 as uuidV4 } from 'uuid';
 
 @Injectable()
 export class UploaderService {
@@ -29,7 +29,7 @@ export class UploaderService {
   private readonly qualityArr = [
     90, 80, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10,
   ];
-  private readonly width = 2160;
+  private readonly width = 2048;
 
   /**
    * Upload Image

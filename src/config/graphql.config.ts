@@ -20,8 +20,6 @@ export class GqlConfigService implements GqlOptionsFactory {
     private readonly authService: AuthService,
   ) {}
 
-  private readonly cookieName =
-    this.configService.get<string>('REFRESH_COOKIE');
   private readonly testing = this.configService.get<boolean>('testing');
   private readonly redis = this.configService.get<RedisOptions>('redis');
 
@@ -47,9 +45,7 @@ export class GqlConfigService implements GqlOptionsFactory {
           plugin: mercuriusCache,
           options: {
             ttl: this.configService.get<number>('ttl'),
-            policy: {
-              Query: { add: true },
-            },
+            all: true,
             storage: this.testing
               ? undefined
               : {

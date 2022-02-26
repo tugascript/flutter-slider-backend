@@ -20,8 +20,11 @@ async function bootstrap() {
     credentials: true,
     origin: configService.get<string>('url'),
   });
-  app.register(cookieParser);
-  app.register(MercuriusGQLUpload, configService.get<UploadOptions>('upload'));
+  app.register(cookieParser as any);
+  app.register(
+    MercuriusGQLUpload as any,
+    configService.get<UploadOptions>('upload'),
+  );
   app.useGlobalPipes(new ValidationPipe());
   await app.listen(configService.get<number>('port'));
 }

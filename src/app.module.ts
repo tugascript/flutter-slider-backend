@@ -16,7 +16,8 @@ import { EmailModule } from './email/email.module';
 import { UploaderModule } from './uploader/uploader.module';
 import { UsersModule } from './users/users.module';
 import { RecordsModule } from './records/records.module';
-import { LoadersModule } from './loaders/loaders.module';
+import { ImagesModule } from './images/images.module';
+import { HeadtoheadModule } from './headtohead/headtohead.module';
 
 @Module({
   imports: [
@@ -45,7 +46,8 @@ import { LoadersModule } from './loaders/loaders.module';
     EmailModule,
     UploaderModule,
     RecordsModule,
-    LoadersModule,
+    ImagesModule,
+    HeadtoheadModule,
   ],
   providers: [
     {

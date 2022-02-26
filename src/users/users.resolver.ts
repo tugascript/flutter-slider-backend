@@ -7,13 +7,13 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import { FileUpload, GraphQLUpload } from 'graphql-upload';
+import { RecordsService } from 'src/records/records.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { FilterDto } from '../common/dtos/filter.dto';
 import { IPaginated } from '../common/interfaces/paginated.interface';
-import { LoadersService } from '../loaders/loaders.service';
 import { RecordEntity } from '../records/entities/record.entity';
-import { PaginatedRecords } from '../records/gql-types/paginated-records.entity';
+import { PaginatedRecordsType } from '../records/gql-types/paginated-records.type';
 import { GetUserDto } from './dtos/get-user.dto';
 import { ProfilePictureDto } from './dtos/profile-picture.dto';
 import { UserEntity } from './entities/user.entity';
@@ -23,7 +23,7 @@ import { UsersService } from './users.service';
 export class UsersResolver {
   constructor(
     private readonly usersService: UsersService,
-    private readonly loadersService: LoadersService,
+    private readonly recordsService: RecordsService,
   ) {}
 
   //____________________ MUTATIONS ____________________
@@ -67,11 +67,11 @@ export class UsersResolver {
   //____________________ RESOLVE FIELDS ____________________
 
   @Public()
-  @ResolveField('records', () => PaginatedRecords)
+  @ResolveField('records', () => PaginatedRecordsType)
   public async loadRecords(
     @Parent() user: UserEntity,
     @Args() dto: FilterDto,
   ): Promise<IPaginated<RecordEntity>> {
-    return this.loadersService.recordsLoader(user.id, dto);
+    return this.recordsService.loadRecords(user.id, dto);
   }
 }

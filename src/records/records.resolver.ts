@@ -3,17 +3,17 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { IPaginated } from '../common/interfaces/paginated.interface';
 import { RecordEntity } from './entities/record.entity';
-import { PaginatedRecords } from './gql-types/paginated-records.entity';
+import { PaginatedRecordsType } from './gql-types/paginated-records.type';
 import { GetRecordsInput } from './inputs/get-records.input';
 import { RecordInput } from './inputs/record.input';
 import { RecordsService } from './records.service';
 
-@Resolver()
+@Resolver(() => RecordEntity)
 export class RecordsResolver {
   constructor(private readonly recordsService: RecordsService) {}
 
   @Mutation(() => RecordEntity)
-  public async createRecord(
+  public async addRecord(
     @CurrentUser() userId: number,
     @Args('input') input: RecordInput,
   ): Promise<RecordEntity> {
@@ -21,7 +21,7 @@ export class RecordsResolver {
   }
 
   @Public()
-  @Query(() => PaginatedRecords)
+  @Query(() => PaginatedRecordsType)
   public async getRecords(
     @Args('input') input: GetRecordsInput,
   ): Promise<IPaginated<RecordEntity>> {

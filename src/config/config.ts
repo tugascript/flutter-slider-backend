@@ -1,7 +1,7 @@
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { UploadOptions } from 'graphql-upload';
-import * as Redis from 'ioredis';
+import Redis from 'ioredis';
 import { LoadStrategy } from '@mikro-orm/core';
 
 export type tLikeOperator = '$ilike' | '$like';
@@ -13,8 +13,6 @@ export interface ISingleJwt {
 
 export interface IJwt {
   access: ISingleJwt;
-  confirmation: ISingleJwt;
-  resetPassword: ISingleJwt;
   refresh: ISingleJwt;
   wsAccess: ISingleJwt;
 }
@@ -56,14 +54,6 @@ export const config = (): IConfig => {
       access: {
         secret: process.env.JWT_ACCESS_SECRET,
         time: parseInt(process.env.JWT_ACCESS_TIME, 10),
-      },
-      confirmation: {
-        secret: process.env.JWT_CONFIRMATION_SECRET,
-        time: parseInt(process.env.JWT_CONFIRMATION_TIME, 10),
-      },
-      resetPassword: {
-        secret: process.env.JWT_RESET_PASSWORD_SECRET,
-        time: parseInt(process.env.JWT_RESET_PASSWORD_TIME, 10),
       },
       refresh: {
         secret: process.env.JWT_REFRESH_SECRET,

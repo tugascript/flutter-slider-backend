@@ -1,12 +1,15 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Module } from '@nestjs/common';
-import { UsersModule } from 'src/users/users.module';
+import { forwardRef, Module } from '@nestjs/common';
+import { UsersModule } from '../users/users.module';
 import { RecordEntity } from './entities/record.entity';
-import { RecordsService } from './records.service';
 import { RecordsResolver } from './records.resolver';
+import { RecordsService } from './records.service';
 
 @Module({
-  imports: [MikroOrmModule.forFeature([RecordEntity]), UsersModule],
+  imports: [
+    MikroOrmModule.forFeature([RecordEntity]),
+    forwardRef(() => UsersModule),
+  ],
   providers: [RecordsService, RecordsResolver],
   exports: [RecordsService],
 })

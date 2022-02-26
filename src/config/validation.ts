@@ -1,4 +1,4 @@
-import * as Joi from 'joi';
+import Joi from 'joi';
 
 export const validationSchema = Joi.object({
   NODE_ENV: Joi.string().required(),
@@ -12,13 +12,8 @@ export const validationSchema = Joi.object({
   DB_DATABASE: Joi.string().required(),
   JWT_ACCESS_SECRET: Joi.string().required(),
   JWT_ACCESS_TIME: Joi.number().required(),
-  JWT_CONFIRMATION_SECRET: Joi.string().required(),
-  JWT_CONFIRMATION_TIME: Joi.number().required(),
-  JWT_RESET_PASSWORD_SECRET: Joi.string().required(),
-  JWT_RESET_PASSWORD_TIME: Joi.number().required(),
   JWT_REFRESH_SECRET: Joi.string().required(),
   JWT_REFRESH_TIME: Joi.number().required(),
-  JWT_WS_ACCESS_TIME: Joi.number().required(),
   REFRESH_COOKIE: Joi.string().required(),
   EMAIL_HOST: Joi.string().required(),
   EMAIL_PORT: Joi.number().required(),

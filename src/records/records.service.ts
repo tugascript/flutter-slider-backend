@@ -1,8 +1,8 @@
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { FilterDto } from 'src/common/dtos/filter.dto';
 import { CommonService } from '../common/common.service';
+import { FilterDto } from '../common/dtos/filter.dto';
 import { IPaginated } from '../common/interfaces/paginated.interface';
 import { UsersService } from '../users/users.service';
 import { RecordEntity } from './entities/record.entity';
@@ -23,7 +23,7 @@ export class RecordsService {
   /**
    * Create Record
    *
-   * Record create CRUD method. Creates a new record, and if
+   * Record create CRUD operation. Creates a new record, and if
    * it's a new level saves as the new user max level.
    */
   public async createRecord(
@@ -48,8 +48,8 @@ export class RecordsService {
   /**
    * Get Records
    *
-   * Records read multiple CRUD method. Gets the paginated records
-   * of a given user.
+   * Records read multiple CRUD operation. Gets the user's cursor paginated
+   * records.
    */
   public async getRecords({
     userId,
@@ -71,9 +71,15 @@ export class RecordsService {
       order,
       qb,
       after,
+      true,
     );
   }
 
+  /**
+   * Load Records
+   *
+   * Same as previous method but for resolve fields.
+   */
   public async loadRecords(
     userId: number,
     { first, after, order }: FilterDto,
@@ -89,6 +95,7 @@ export class RecordsService {
       order,
       qb,
       after,
+      true,
     );
   }
 }

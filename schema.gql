@@ -6,27 +6,27 @@ type User {
   id: Int!
   createdAt: String!
   updatedAt: String!
-  name: String!
   username: String!
   email: String
   picture: String
+  maxLevel: Int!
   lastLogin: String!
   lastOnline: String!
-  onlineStatus: OnlineStatus!
+  records(after: String, first: Int = 10, order: QueryOrder = DESC): PaginatedRecords!
 }
 
-enum OnlineStatus {
-  ONLINE
-  BUSY
-  IDLE
-  DO_NOT_DISTURB
-  INVISIBLE
-  OFFLINE
+enum QueryOrder {
+  ASC
+  DESC
 }
 
-type Message {
-  id: ID!
-  message: String!
+type Record {
+  id: Int!
+  createdAt: String!
+  updatedAt: String!
+  level: Int!
+  moves: Int!
+  time: Int!
 }
 
 type PageInfo {
@@ -34,41 +34,91 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
-type UserEntityPageEdge {
+type RecordEntityPageEdge {
   cursor: String!
-  node: User!
+  node: Record!
 }
 
-type PaginatedUsers {
+type PaginatedRecords {
   totalCount: Int!
-  edges: [UserEntityPageEdge!]!
+  edges: [RecordEntityPageEdge!]!
   pageInfo: PageInfo!
+}
+
+type Message {
+  id: ID!
+  message: String!
+}
+
+type Image {
+  id: Int!
+  createdAt: String!
+  updatedAt: String!
+  url: String!
+}
+
+type ImageEntityPageEdge {
+  cursor: String!
+  node: Image!
+}
+
+type PaginatedImages {
+  totalCount: Int!
+  edges: [ImageEntityPageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type Position {
+  row: Int!
+  column: Int!
+}
+
+type Piece {
+  position: Position!
+  empty: Boolean!
+}
+
+type Game {
+  puzzle: [[Piece!]!]!
+  status: GameStatus!
+  next: Position!
+}
+
+enum GameStatus {
+  starting
+  ongoing
+  paused
+  completed
+  lost
 }
 
 type Query {
   me: User!
   getUser(username: String!): User!
-  findUsers(after: String, first: Int = 10, search: String!, cursor: UsersCursor = DATE, order: QueryOrder = DESC): PaginatedUsers!
+  getRecords(input: GetRecordsInput!): PaginatedRecords!
+  getImages(after: String, first: Int = 10): PaginatedImages!
+  newGame(level: Int!): Game!
 }
 
-enum UsersCursor {
-  DATE
-  ALPHABET
-}
-
-enum QueryOrder {
-  ASC
-  DESC
-  asc
-  desc
+input GetRecordsInput {
+  userId: Int!
+  level: Int
+  order: QueryOrder = DESC
 }
 
 type Mutation {
   updateProfilePicture(picture: Upload!): User!
-  updateOnlineStatus(defaultStatus: OnlineStatus!): Message!
-  deleteAccount(password: String!): Message!
   testFileUpload(file: Upload!): String!
+  addRecord(input: RecordInput!): Record!
+  addImage(image: Upload!): Image!
+  deleteImage(imageId: Int!): Message!
 }
 
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
+
+input RecordInput {
+  level: Int!
+  moves: Int!
+  time: Int!
+}
