@@ -15,6 +15,8 @@ import { validationSchema } from './config/validation';
 import { EmailModule } from './email/email.module';
 import { UploaderModule } from './uploader/uploader.module';
 import { UsersModule } from './users/users.module';
+import { RecordsModule } from './records/records.module';
+import { LoadersModule } from './loaders/loaders.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     EmailModule,
     UploaderModule,
+    RecordsModule,
+    LoadersModule,
   ],
   providers: [
     {

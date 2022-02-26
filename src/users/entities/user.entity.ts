@@ -1,27 +1,25 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 import {
-  Embedded,
+  Collection,
   Entity,
-  Enum,
+  OneToMany,
   OptionalProps,
   Property,
 } from '@mikro-orm/core';
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 import {
-  IsBoolean,
   IsDate,
   IsEmail,
-  IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   IsUrl,
   Length,
   Matches,
 } from 'class-validator';
-import { NAME_REGEX, SLUG_REGEX } from '../../common/constants/regex';
+import { SLUG_REGEX } from '../../common/constants/regex';
 import { LocalBaseEntity } from '../../common/entities/base.entity';
-import { CredentialsEmbeddable } from '../embeddables/credentials.embeddable';
-import { OnlineStatusEnum } from '../enums/online-status.enum';
+import { RecordEntity } from '../../records/entities/record.entity';
 import { ownerMiddleware } from '../middleware/owner.middleware';
 
 @ObjectType('User')
@@ -32,20 +30,10 @@ export class UserEntity extends LocalBaseEntity {
     | 'createdAt'
     | 'updatedAt'
     | 'picture'
-    | 'defaultStatus'
-    | 'confirmed'
-    | 'suspended'
-    | 'twoFactor'
-    | 'credentials'
+    | 'count'
+    | 'level'
     | 'lastLogin'
     | 'lastOnline';
-
-  @Field(() => String)
-  @Property({ columnType: 'varchar(100)' })
-  @IsString()
-  @Length(3, 100)
-  @Matches(NAME_REGEX)
-  public name!: string;
 
   @Field(() => String)
   @Property({ columnType: 'varchar(110)', unique: true })
@@ -65,32 +53,13 @@ export class UserEntity extends LocalBaseEntity {
   @IsUrl()
   public picture?: string;
 
-  @Property()
-  @IsString()
-  public password!: string;
+  @Field(() => Int)
+  @Property({ columnType: 'int', default: 1 })
+  public maxLevel: number = 1;
 
-  @Enum({
-    items: () => OnlineStatusEnum,
-    default: OnlineStatusEnum.ONLINE,
-    columnType: 'varchar(14)',
-  })
-  @IsEnum(OnlineStatusEnum)
-  public defaultStatus: OnlineStatusEnum = OnlineStatusEnum.ONLINE;
-
-  @Property({ default: false })
-  @IsBoolean()
-  public confirmed: boolean = false;
-
-  @Property({ default: false })
-  @IsBoolean()
-  public suspended: boolean = false;
-
-  @Property({ default: false })
-  @IsBoolean()
-  public twoFactor: boolean = false;
-
-  @Embedded(() => CredentialsEmbeddable)
-  public credentials: CredentialsEmbeddable = new CredentialsEmbeddable();
+  @Property({ columnType: 'int', default: 0 })
+  @IsInt()
+  public count: number = 0;
 
   @Field(() => String)
   @Property()
@@ -101,4 +70,9 @@ export class UserEntity extends LocalBaseEntity {
   @Property()
   @IsDate()
   public lastOnline: Date = new Date();
+
+  // Relations
+
+  @OneToMany(() => RecordEntity, (r) => r.owner)
+  public records = new Collection<RecordEntity>(this);
 }

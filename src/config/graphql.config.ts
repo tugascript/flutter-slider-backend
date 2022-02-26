@@ -6,7 +6,10 @@ import { FastifyRequest } from 'fastify';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { PubSub } from 'graphql-subscriptions';
 import { RedisOptions } from 'ioredis';
-import mercuriusCache from 'mercurius-cache';
+import mercuriusCache, {
+  MercuriusCacheOptions,
+  MercuriusCachePolicy,
+} from 'mercurius-cache';
 import { AuthService } from '../auth/auth.service';
 import { MercuriusExtendedDriverConfig } from './interfaces/mercurius-extended-driver-config.interface';
 
@@ -20,6 +23,7 @@ export class GqlConfigService implements GqlOptionsFactory {
   private readonly cookieName =
     this.configService.get<string>('REFRESH_COOKIE');
   private readonly testing = this.configService.get<boolean>('testing');
+  private readonly redis = this.configService.get<RedisOptions>('redis');
 
   public createGqlOptions(): MercuriusExtendedDriverConfig {
     return {
@@ -29,10 +33,10 @@ export class GqlConfigService implements GqlOptionsFactory {
       routes: true,
       subscription: {
         fullWsTransport: true,
-        pubsub: this.configService.get<boolean>('testing')
+        pubsub: this.testing
           ? new PubSub()
           : new RedisPubSub({
-              connection: this.configService.get<RedisOptions>('redis'),
+              connection: this.redis,
             }),
       },
       context: (req: FastifyRequest) => {
@@ -43,8 +47,19 @@ export class GqlConfigService implements GqlOptionsFactory {
           plugin: mercuriusCache,
           options: {
             ttl: this.configService.get<number>('ttl'),
-            all: true,
-          },
+            policy: {
+              Query: { add: true },
+            },
+            storage: this.testing
+              ? undefined
+              : {
+                  type: 'redis',
+                  options: {
+                    client: this.redis,
+                    invalidation: { referencesTTL: 60, invalidate: true },
+                  },
+                },
+          } as MercuriusCacheOptions,
         },
         {
           plugin: altair,

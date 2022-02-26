@@ -3,9 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createTransport } from 'nodemailer';
 import { IEmailConfig } from '../config/config';
 import { UserEntity } from '../users/entities/user.entity';
-import { confirmationEmail } from './templates/confirmation';
 import { loginConfirmationEmail } from './templates/login-confirmation';
-import { passwordResetEmail } from './templates/password-reset';
 
 @Injectable()
 export class EmailService {
@@ -18,36 +16,14 @@ export class EmailService {
     'EMAIL_USER',
   )}>`;
 
-  public async sendConfirmationEmail(
-    { name, email }: UserEntity,
-    url: string,
-  ): Promise<void> {
-    await this.sendEmail(
-      email,
-      `Confirm your email ${name}`,
-      confirmationEmail(name, url),
-    );
-  }
-
-  public async sendPasswordResetEmail(
-    { name, email }: UserEntity,
-    url: string,
-  ): Promise<void> {
-    await this.sendEmail(
-      email,
-      `Reset your password ${name}`,
-      passwordResetEmail(name, url),
-    );
-  }
-
   public async sendAccessCode(
-    { email, name }: UserEntity,
+    { email, username }: UserEntity,
     accessCode: string,
   ): Promise<void> {
     await this.sendEmail(
       email,
-      `Your access code ${name}`,
-      loginConfirmationEmail(name, accessCode),
+      `Your access code ${username}`,
+      loginConfirmationEmail(username, accessCode),
     );
   }
 

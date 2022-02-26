@@ -1,19 +1,16 @@
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import {
-  BadRequestException,
   CACHE_MANAGER,
   Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { compare, hash } from 'bcrypt';
 import { Cache } from 'cache-manager';
 import { Response } from 'express';
-import { v4 as uuidV4, v5 as uuidV5 } from 'uuid';
+import { v5 as uuidV5 } from 'uuid';
 import { RegisterDto } from '../auth/dtos/register.dto';
-import { ISessionData } from '../auth/interfaces/session-data.interface';
 import { ITokenPayload } from '../auth/interfaces/token-payload.interface';
 import { CommonService } from '../common/common.service';
 import { LocalMessageType } from '../common/gql-types/message.type';
@@ -21,10 +18,8 @@ import { IPaginated } from '../common/interfaces/paginated.interface';
 import { tLikeOperator } from '../config/config';
 import { UploaderService } from '../uploader/uploader.service';
 import { GetUsersDto } from './dtos/get-users.dto';
-import { OnlineStatusDto } from './dtos/online-status.dto';
 import { ProfilePictureDto } from './dtos/profile-picture.dto';
 import { UserEntity } from './entities/user.entity';
-import { OnlineStatusEnum } from './enums/online-status.enum';
 import { getUserCursor } from './enums/users-cursor.enum';
 
 @Injectable()
@@ -42,8 +37,6 @@ export class UsersService {
   private readonly likeOperator =
     this.configService.get<tLikeOperator>('likeOperator');
   private readonly wsNamespace = this.configService.get<string>('WS_UUID');
-  private readonly wsAccessTime =
-    this.configService.get<number>('jwt.wsAccess.time');
   private readonly cookieName =
     this.configService.get<string>('REFRESH_COOKIE');
 
@@ -55,32 +48,12 @@ export class UsersService {
    * Creates a new user and saves him in db
    */
   public async createUser({
-    name,
+    username,
     email,
-    password1,
-    password2,
   }: RegisterDto): Promise<UserEntity> {
-    if (password1 !== password2)
-      throw new BadRequestException('Passwords do not match');
-
-    name = this.commonService.formatTitle(name);
-    const password = await hash(password1, 10);
-    let username = this.commonService.generatePointSlug(name);
-
-    if (username.length >= 3) {
-      const count = await this.usersRepository.count({
-        username: { $like: `${username}%` },
-      });
-      if (count > 0) username += count.toString();
-    } else {
-      username = uuidV4();
-    }
-
     const user = this.usersRepository.create({
-      name,
       username,
       email,
-      password,
     });
 
     await this.saveUserToDb(user, true);
@@ -109,36 +82,6 @@ export class UsersService {
   }
 
   /**
-   * Update Default Status
-   *
-   * Updates the defualt online status of current user
-   */
-  public async updateDefaultStatus(
-    userId: number,
-    { defaultStatus }: OnlineStatusDto,
-  ): Promise<LocalMessageType> {
-    const user = await this.getUserById(userId);
-    user.defaultStatus = defaultStatus;
-
-    const userUuid = uuidV5(userId.toString(), this.wsNamespace);
-    const sessionData = await this.commonService.throwInternalError(
-      this.cacheManager.get<ISessionData>(userUuid),
-    );
-
-    if (sessionData) {
-      sessionData.status = defaultStatus;
-      await this.commonService.throwInternalError(
-        this.cacheManager.set<ISessionData>(userUuid, sessionData, {
-          ttl: this.wsAccessTime,
-        }),
-      );
-    }
-
-    await this.saveUserToDb(user);
-    return new LocalMessageType('Default status changed successfully');
-  }
-
-  /**
    * Delete User
    *
    * Deletes current user account
@@ -146,14 +89,8 @@ export class UsersService {
   public async deleteUser(
     res: Response,
     userId: number,
-    password: string,
   ): Promise<LocalMessageType> {
     const user = await this.getUserById(userId);
-
-    if (password.length > 1 && !(await compare(password, user.password)))
-      throw new BadRequestException('Wrong password!');
-
-    res.clearCookie(this.cookieName);
 
     try {
       await this.cacheManager.del(uuidV5(userId.toString(), this.wsNamespace));
@@ -162,7 +99,7 @@ export class UsersService {
     await this.commonService.throwInternalError(
       this.usersRepository.removeAndFlush(user),
     );
-
+    res.clearCookie(this.cookieName, { path: '/api/auth/refresh-access' });
     return new LocalMessageType('Account deleted successfully');
   }
 
@@ -200,8 +137,8 @@ export class UsersService {
     id,
     count,
   }: ITokenPayload): Promise<UserEntity> {
-    const user = await this.usersRepository.findOne({ id });
-    if (!user || user.credentials.version !== count)
+    const user = await this.usersRepository.findOne({ id, count });
+    if (!user)
       throw new UnauthorizedException('Token is invalid or has expired');
     return user;
   }
@@ -257,21 +194,6 @@ export class UsersService {
       qb,
       after,
     );
-  }
-
-  /**
-   * Get User Online Status
-   *
-   * Gets user online status from cache
-   */
-  public async getUserOnlineStatus(userId: number) {
-    const sessionData = await this.commonService.throwInternalError(
-      this.cacheManager.get<ISessionData>(
-        uuidV5(userId.toString(), this.wsNamespace),
-      ),
-    );
-
-    return sessionData ? sessionData.status : OnlineStatusEnum.OFFLINE;
   }
 
   //____________________ OTHER ____________________

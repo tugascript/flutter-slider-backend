@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CACHE_MANAGER,
   Inject,
   Injectable,
@@ -17,25 +16,20 @@ import { IJwt, ISingleJwt } from '../config/config';
 import { EmailService } from '../email/email.service';
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
-import { ChangeEmailDto } from './dtos/change-email.dto';
-import { ChangePasswordDto } from './dtos/change-password.input';
-import { ConfirmEmailDto } from './dtos/confirm-email.dto';
 import { ConfirmLoginDto } from './dtos/confirm-login.dto';
-import { ResetEmailDto } from './dtos/reset-email.dto';
-import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { generateToken, verifyToken } from './helpers/async-jwt';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
+import { generateToken, verifyToken } from './helpers/async-jwt';
 import {
   IAccessPayload,
   IAccessPayloadResponse,
 } from './interfaces/access-payload.interface';
+import { IAuthResult } from './interfaces/auth-result.interface';
 import { ISessionData } from './interfaces/session-data.interface';
 import {
   ITokenPayload,
   ITokenPayloadResponse,
 } from './interfaces/token-payload.interface';
-import { IAuthResult } from './interfaces/auth-result.interface';
 
 @Injectable()
 export class AuthService {
@@ -65,40 +59,14 @@ export class AuthService {
    * Register User
    *
    * Takes the register input, creates a new user in the db
-   * and asyncronously sends a confirmation email
+   * and asyncronously sends a get access code email
    */
   public async registerUser(input: RegisterDto): Promise<LocalMessageType> {
     const user = await this.usersService.createUser(input);
-    this.sendConfirmationEmail(user);
-    return new LocalMessageType('User registered successfully');
-  }
-
-  /**
-   * Confirm Email
-   *
-   * Takes a confirmation token, confirms and updates the user
-   */
-  public async confirmEmail(
-    res: FastifyReply,
-    { confirmationToken }: ConfirmEmailDto,
-  ): Promise<IAuthResult> {
-    const payload = (await this.verifyAuthToken(
-      confirmationToken,
-      'confirmation',
-    )) as ITokenPayloadResponse;
-    const user = await this.usersService.getUserByPayload(payload);
-
-    if (user.confirmed)
-      throw new BadRequestException('Email already confirmed');
-
-    user.confirmed = true;
-    user.credentials.updateVersion();
-    user.lastLogin = new Date();
-    await this.usersService.saveUserToDb(user);
-
-    const [accessToken, refreshToken] = await this.generateAuthTokens(user);
-    this.saveRefreshCookie(res, refreshToken);
-    return { accessToken };
+    await this.generateAccessCode(user);
+    return new LocalMessageType(
+      'User registered successfully. Login confirmation code sent.',
+    );
   }
 
   /**
@@ -107,98 +75,10 @@ export class AuthService {
    * Takes the login input, if two factor auth is true: it caches a new access code and
    * asyncronously sends it by email. If false, it sends an auth type
    */
-  public async loginUser(
-    res: FastifyReply,
-    { email, password }: LoginDto,
-  ): Promise<IAuthResult | LocalMessageType> {
+  public async loginUser({ email }: LoginDto): Promise<LocalMessageType> {
     const user = await this.usersService.getUserForAuth(email);
-    const currentPassword = user.password;
-    const { lastPassword, updatedAt } = user.credentials;
-    const now = dayjs();
-    const time = dayjs.unix(updatedAt);
-    const months = now.diff(time, 'month');
-
-    if (!(await compare(password, currentPassword))) {
-      // To check for passwords changes, based on facebook auth
-      if (
-        lastPassword.length > 0 &&
-        !(await compare(lastPassword, currentPassword))
-      ) {
-        let message = 'You changed your password ';
-
-        if (months > 0) {
-          message += months + ' months ago.';
-        } else {
-          const days = now.diff(time, 'day');
-
-          if (days > 0) {
-            message += days + ' days ago.';
-          } else {
-            const hours = now.diff(time, 'hour');
-
-            if (hours > 0) {
-              message += hours + ' hours ago.';
-            } else {
-              message += 'recently.';
-            }
-          }
-        }
-
-        throw new UnauthorizedException(message);
-      }
-
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.confirmed) {
-      this.sendConfirmationEmail(user);
-      throw new UnauthorizedException(
-        'Please confirm your account. A new email has been sent',
-      );
-    }
-
-    if (user.twoFactor) {
-      const code = this.generateAccessCode();
-
-      await this.commonService.throwInternalError(
-        this.cacheManager.set(
-          uuidV5(email, this.authNamespace),
-          await hash(code, 5),
-        ),
-      );
-
-      this.emailService.sendAccessCode(user, code);
-
-      return new LocalMessageType('Login confirmation code sent');
-    }
-
-    const [accessToken, refreshToken] = await this.generateAuthTokens(user);
-    this.saveRefreshCookie(res, refreshToken);
-
-    user.lastLogin = new Date();
-    await this.usersService.saveUserToDb(user);
-
-    return {
-      accessToken,
-      message:
-        months >= 6
-          ? new LocalMessageType('Please confirm your credentials')
-          : undefined,
-    };
-  }
-
-  /**
-   * Confirm Credentials
-   *
-   * Confirms credentials update by user
-   */
-  public async confirmCredentials(userId: number): Promise<LocalMessageType> {
-    const user = await this.usersService.getUserById(userId);
-
-    user.credentials.updatedAt = dayjs().unix();
-    await this.usersService.saveUserToDb(user);
-
-    return new LocalMessageType('Authentication credentials confirmed');
+    await this.generateAccessCode(user);
+    return new LocalMessageType('Login confirmation code sent.');
   }
 
   /**
@@ -266,71 +146,6 @@ export class AuthService {
   }
 
   /**
-   * Send Reset Password Email
-   *
-   * Takes a user email and sends a reset password email
-   */
-  public async sendResetPasswordEmail({
-    email,
-  }: ResetEmailDto): Promise<LocalMessageType> {
-    const user = await this.usersService.getUncheckUser(email);
-
-    if (user) {
-      const resetToken = await this.generateAuthToken(
-        { id: user.id, count: user.credentials.version },
-        'resetPassword',
-      );
-      const url = `${this.url}/reset-password/${resetToken}/`;
-      this.emailService.sendPasswordResetEmail(user, url);
-    }
-
-    return new LocalMessageType('Password reset email sent');
-  }
-
-  /**
-   * Reset Password
-   *
-   * Resets password given a reset password jwt token
-   */
-  public async resetPassword({
-    resetToken,
-    password1,
-    password2,
-  }: ResetPasswordDto): Promise<LocalMessageType> {
-    const payload = (await this.verifyAuthToken(
-      resetToken,
-      'resetPassword',
-    )) as ITokenPayloadResponse;
-
-    if (password1 !== password2)
-      throw new BadRequestException('Passwords do not match');
-
-    const user = await this.usersService.getUserByPayload(payload);
-    user.credentials.updatePassword(user.password);
-    user.password = await hash(password1, 10);
-    await this.usersService.saveUserToDb(user);
-
-    return new LocalMessageType('Password reseted successfully');
-  }
-
-  /**
-   * Change Two Factor Auth
-   *
-   * Activates or deactivates two factor auth
-   */
-  public async changeTwoFactorAuth(userId: number): Promise<LocalMessageType> {
-    const user = await this.usersService.getUserById(userId);
-
-    user.twoFactor = !user.twoFactor;
-    await this.usersService.saveUserToDb(user);
-
-    const status = user.twoFactor ? 'activated' : 'deactivated';
-    return new LocalMessageType(
-      `Two factor authentication ${status} successfully`,
-    );
-  }
-
-  /**
    * Update Email
    *
    * Change current user email
@@ -338,43 +153,11 @@ export class AuthService {
   public async updateEmail(
     res: FastifyReply,
     userId: number,
-    { email, password }: ChangeEmailDto,
+    { email }: LoginDto,
   ): Promise<IAuthResult> {
     const user = await this.usersService.getUserById(userId);
-
-    if (!(await compare(password, user.password)))
-      throw new BadRequestException('Wrong password!');
 
     user.email = email;
-    user.credentials.version++;
-    await this.usersService.saveUserToDb(user);
-
-    const [accessToken, refreshToken] = await this.generateAuthTokens(user);
-    this.saveRefreshCookie(res, refreshToken);
-
-    return { accessToken };
-  }
-
-  /**
-   * Update Password
-   *
-   * Change current user password
-   */
-  public async updatePassword(
-    res: FastifyReply,
-    userId: number,
-    { password, password1, password2 }: ChangePasswordDto,
-  ): Promise<IAuthResult> {
-    const user = await this.usersService.getUserById(userId);
-
-    if (!(await compare(password, user.password)))
-      throw new BadRequestException('Wrong password!');
-
-    if (password1 !== password2)
-      throw new BadRequestException('Passwords do not match');
-
-    user.credentials.updatePassword(user.password);
-    user.password = await hash(password1, 10);
     await this.usersService.saveUserToDb(user);
 
     const [accessToken, refreshToken] = await this.generateAuthTokens(user);
@@ -395,13 +178,6 @@ export class AuthService {
     const { id } = await this.verifyAuthToken(accessToken, 'access');
     const user = await this.usersService.getUserById(id);
 
-    if (!user.confirmed) {
-      this.sendConfirmationEmail(user);
-      throw new UnauthorizedException(
-        'Please confirm your email, a new email has been sent',
-      );
-    }
-
     const userUuid = uuidV5(user.id.toString(), this.wsNamespace);
 
     let sessionData = await this.commonService.throwInternalError(
@@ -410,8 +186,7 @@ export class AuthService {
 
     if (!sessionData)
       sessionData = {
-        count: user.credentials.version,
-        status: user.defaultStatus,
+        count: user.count,
         sessions: {},
       };
 
@@ -444,9 +219,9 @@ export class AuthService {
     const now = dayjs().unix();
 
     if (now - sessionData.sessions[sessionId] > this.accessTime) {
-      const { credentials } = await this.usersService.getUserById(userId);
+      const { count } = await this.usersService.getUserById(userId);
 
-      if (credentials.version !== sessionData.count) {
+      if (count !== sessionData.count) {
         await this.commonService.throwInternalError(
           this.cacheManager.del(userUuid),
         );
@@ -523,22 +298,6 @@ export class AuthService {
   //____________________ PRIVATE METHODS ____________________
 
   /**
-   * Send Confirmation Email
-   *
-   * Sends an email for the user to confirm
-   * his account after registration
-   */
-  private async sendConfirmationEmail(user: UserEntity): Promise<string> {
-    const emailToken = await this.generateAuthToken(
-      { id: user.id, count: user.credentials.version },
-      'confirmation',
-    );
-    const url = `${this.url}/confirm-email/${emailToken}/`;
-    await this.emailService.sendConfirmationEmail(user, url);
-    return emailToken;
-  }
-
-  /**
    * Generate Auth Tokens
    *
    * Generates an array with both the access and
@@ -548,11 +307,11 @@ export class AuthService {
    */
   private async generateAuthTokens({
     id,
-    credentials,
+    count,
   }: UserEntity): Promise<[string, string]> {
     return Promise.all([
       this.generateAuthToken({ id }, 'access'),
-      this.generateAuthToken({ id, count: credentials.version }, 'refresh'),
+      this.generateAuthToken({ id, count }, 'refresh'),
     ]);
   }
 
@@ -578,7 +337,7 @@ export class AuthService {
    *
    * Generates a 6 char long number string for two factor auth
    */
-  private generateAccessCode(): string {
+  private async generateAccessCode(user: UserEntity): Promise<void> {
     const nums = '0123456789';
 
     let code = '';
@@ -587,7 +346,14 @@ export class AuthService {
       code += nums[i];
     }
 
-    return code;
+    await this.commonService.throwInternalError(
+      this.cacheManager.set(
+        uuidV5(user.email, this.authNamespace),
+        await hash(code, 5),
+      ),
+    );
+
+    this.emailService.sendAccessCode(user, code);
   }
 
   /**
