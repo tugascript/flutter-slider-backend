@@ -1,4 +1,10 @@
-import { Entity, Enum, OneToOne, Property } from '@mikro-orm/core';
+import {
+  Entity,
+  Enum,
+  OneToOne,
+  OptionalProps,
+  Property,
+} from '@mikro-orm/core';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import {
   IsEnum,
@@ -18,6 +24,14 @@ import { GameWinnerEnum } from '../enum/game-winner.enum';
 @ObjectType('Game')
 @Entity({ tableName: 'games' })
 export class GameEntity extends LocalBaseEntity {
+  [OptionalProps]?:
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'status'
+    | 'winner'
+    | 'time';
+
   @Field(() => DifficultyEnum)
   @Enum({
     items: () => DifficultyEnum,
@@ -77,5 +91,5 @@ export class GameEntity extends LocalBaseEntity {
     nullable: true,
   })
   @IsOptional()
-  public challenger?: UserEntity;
+  public challenger?: UserEntity | null;
 }

@@ -2,14 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GqlOptionsFactory } from '@nestjs/graphql';
 import altair from 'altair-fastify-plugin';
-import { FastifyRequest } from 'fastify';
-import { RedisPubSub } from 'graphql-redis-subscriptions';
-import { PubSub } from 'graphql-subscriptions';
-import { RedisOptions } from 'ioredis';
-import mercuriusCache, {
-  MercuriusCacheOptions,
-  MercuriusCachePolicy,
-} from 'mercurius-cache';
+import Redis, { RedisOptions } from 'ioredis';
+import mercuriusCache, { MercuriusCacheOptions } from 'mercurius-cache';
+import redis from 'mqemitter-redis';
 import { AuthService } from '../auth/auth.service';
 import { MercuriusExtendedDriverConfig } from './interfaces/mercurius-extended-driver-config.interface';
 
@@ -21,7 +16,7 @@ export class GqlConfigService implements GqlOptionsFactory {
   ) {}
 
   private readonly testing = this.configService.get<boolean>('testing');
-  private readonly redis = this.configService.get<RedisOptions>('redis');
+  private readonly redisOpt = this.configService.get<RedisOptions>('redis');
 
   public createGqlOptions(): MercuriusExtendedDriverConfig {
     return {
@@ -31,14 +26,27 @@ export class GqlConfigService implements GqlOptionsFactory {
       routes: true,
       subscription: {
         fullWsTransport: true,
-        pubsub: this.testing
-          ? new PubSub()
-          : new RedisPubSub({
-              connection: this.redis,
-            }),
-      },
-      context: (req: FastifyRequest) => {
-        return { authorization: req.headers.authorization };
+        emitter: this.testing ? undefined : redis(this.redisOpt),
+        onConnect: async ({ payload }) => {
+          const ctx: Record<string, number> = {};
+
+          const authHeader = payload.authorization;
+          if (payload.authorization) {
+            const arr = authHeader.split(' ');
+
+            if (arr[0] === 'Bearer') {
+              try {
+                const { id } = await this.authService.verifyAuthToken(
+                  arr[1],
+                  'access',
+                );
+                ctx.user = id;
+              } catch (_) {}
+            }
+          }
+
+          return ctx;
+        },
       },
       plugins: [
         {
@@ -51,7 +59,7 @@ export class GqlConfigService implements GqlOptionsFactory {
               : {
                   type: 'redis',
                   options: {
-                    client: this.redis,
+                    client: new Redis(this.redisOpt),
                     invalidation: { referencesTTL: 60, invalidate: true },
                   },
                 },

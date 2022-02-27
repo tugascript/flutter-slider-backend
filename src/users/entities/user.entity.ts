@@ -38,7 +38,7 @@ export class UserEntity extends LocalBaseEntity {
   @Field(() => String)
   @Property({ columnType: 'varchar(110)', unique: true })
   @IsString()
-  @Length(3, 110)
+  @Length(3, 100)
   @Matches(SLUG_REGEX)
   public username!: string;
 

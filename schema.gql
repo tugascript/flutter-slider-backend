@@ -68,6 +68,54 @@ type PaginatedImages {
   pageInfo: PageInfo!
 }
 
+type Game {
+  id: Int!
+  createdAt: String!
+  updatedAt: String!
+  difficulty: Difficulty!
+  level: Int!
+  status: GameStatus!
+  winner: GameWinner!
+  image: String!
+  time: Int!
+  host: User!
+  challenger: User!
+}
+
+enum Difficulty {
+  easy
+  medium
+  hard
+}
+
+enum GameStatus {
+  new
+  on
+  done
+}
+
+enum GameWinner {
+  host
+  challenger
+  unsettled
+}
+
+type GameEntityNotificationEdge {
+  cursor: String!
+  node: Game!
+}
+
+type GameNotification {
+  type: NotificationType!
+  edge: GameEntityNotificationEdge!
+}
+
+enum NotificationType {
+  NEW
+  UPDATE
+  DELETE
+}
+
 type Position {
   row: Int!
   column: Int!
@@ -78,26 +126,11 @@ type Piece {
   empty: Boolean!
 }
 
-type Game {
-  puzzle: [[Piece!]!]!
-  status: GameStatus!
-  next: Position!
-}
-
-enum GameStatus {
-  starting
-  ongoing
-  paused
-  completed
-  lost
-}
-
 type Query {
   me: User!
   getUser(username: String!): User!
   getRecords(input: GetRecordsInput!): PaginatedRecords!
   getImages(after: String, first: Int = 10): PaginatedImages!
-  newGame(level: Int!): Game!
 }
 
 input GetRecordsInput {
@@ -112,6 +145,8 @@ type Mutation {
   addRecord(input: RecordInput!): Record!
   addImage(image: Upload!): Image!
   deleteImage(imageId: Int!): Message!
+  newGame(input: GameInput!): Game!
+  deleteGame(entityId: Int!): Message!
 }
 
 """The `Upload` scalar type represents a file upload."""
@@ -121,4 +156,14 @@ input RecordInput {
   level: Int!
   moves: Int!
   time: Int!
+}
+
+input GameInput {
+  difficulty: Difficulty!
+  level: Int!
+  image: Upload!
+}
+
+type Subscription {
+  gameNotifications(gameId: Int): GameNotification!
 }

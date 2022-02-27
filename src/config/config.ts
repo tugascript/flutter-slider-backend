@@ -1,8 +1,8 @@
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { UploadOptions } from 'graphql-upload';
-import Redis from 'ioredis';
 import { LoadStrategy } from '@mikro-orm/core';
+import { RedisOptions } from 'ioredis';
 
 export type tLikeOperator = '$ilike' | '$like';
 
@@ -37,7 +37,7 @@ export interface IConfig {
   jwt: IJwt;
   emailService: IEmailConfig;
   bucketConfig: S3ClientConfig;
-  redis: Redis.Redis | null;
+  redis: RedisOptions | null;
   ttl: number;
   upload: UploadOptions;
   testing: boolean;
@@ -105,10 +105,10 @@ export const config = (): IConfig => {
         },
     redis: TESTING
       ? null
-      : new Redis({
+      : {
           host: process.env.REDIS_HOST,
           port: parseInt(process.env.REDIS_PORT, 10),
-        }),
+        },
     ttl: parseInt(process.env.REDIS_CACHE_TTL, 10),
     upload: {
       maxFileSize: parseInt(process.env.MAX_FILE_SIZE, 10),

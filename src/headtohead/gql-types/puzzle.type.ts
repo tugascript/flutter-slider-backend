@@ -1,17 +1,10 @@
-import { Field, Int, ObjectType } from '@nestjs/graphql';
-import { DifficultyEnum } from '../enum/difficulty.enum';
+import { Field, ObjectType } from '@nestjs/graphql';
 import { PuzzleStatusEnum } from '../enum/puzzle-status.enum';
 import { PieceType } from './piece.type';
 import { PositionType } from './position.type';
 
 @ObjectType('Game')
 export class PuzzleType {
-  @Field(() => DifficultyEnum)
-  public difficulty!: DifficultyEnum;
-
-  @Field(() => Int)
-  public level!: number;
-
   @Field(() => [[PieceType]])
   public puzzle!: PieceType[][];
 
@@ -21,9 +14,7 @@ export class PuzzleType {
   @Field(() => PositionType)
   public next!: PositionType;
 
-  constructor({ difficulty, level, puzzle, status, next }: PuzzleType) {
-    this.difficulty = difficulty;
-    this.level = level;
+  constructor({ puzzle, status, next }: PuzzleType) {
     this.puzzle = puzzle;
     this.status = status;
     this.next = next;

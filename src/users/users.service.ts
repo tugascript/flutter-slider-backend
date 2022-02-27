@@ -212,7 +212,7 @@ export class UsersService {
 
     await this.commonService.throwDuplicateError(
       this.usersRepository.flush(),
-      'Email already exists',
+      'Username or email already exist',
     );
   }
 }
