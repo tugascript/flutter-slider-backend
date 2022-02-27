@@ -95,9 +95,12 @@ enum GameStatus {
 }
 
 enum GameWinner {
+  default_host
+  default_challenger
   host
   challenger
   unsettled
+  draw
 }
 
 type GameEntityNotificationEdge {
@@ -116,6 +119,17 @@ enum NotificationType {
   DELETE
 }
 
+type GameEntityPageEdge {
+  cursor: String!
+  node: Game!
+}
+
+type PaginatedGames {
+  totalCount: Int!
+  edges: [GameEntityPageEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Position {
   row: Int!
   column: Int!
@@ -126,11 +140,20 @@ type Piece {
   empty: Boolean!
 }
 
+type Puzzle {
+  puzzle: [[Piece!]!]!
+  completed: Boolean!
+  next: Position!
+  time: Int!
+}
+
 type Query {
   me: User!
   getUser(username: String!): User!
   getRecords(input: GetRecordsInput!): PaginatedRecords!
   getImages(after: String, first: Int = 10): PaginatedImages!
+  getNewGames(after: String, first: Int = 10, search: String): PaginatedGames!
+  getGameRecords(after: String, first: Int = 10, order: QueryOrder = DESC): PaginatedGames!
 }
 
 input GetRecordsInput {
@@ -147,6 +170,11 @@ type Mutation {
   deleteImage(imageId: Int!): Message!
   newGame(input: GameInput!): Game!
   deleteGame(entityId: Int!): Message!
+  joinGame(entityId: Int!): Game!
+  kickChallenger(entityId: Int!): Game!
+  finishGame(input: EndGameInput!): Game!
+  startPuzzle(entityId: Int!): Puzzle!
+  movePiece(input: PositionInput!): Puzzle!
 }
 
 """The `Upload` scalar type represents a file upload."""
@@ -164,6 +192,19 @@ input GameInput {
   image: Upload!
 }
 
+input EndGameInput {
+  gameId: Int!
+  time: Int!
+  winner: GameWinner!
+}
+
+input PositionInput {
+  gameId: Int!
+  row: Int!
+  column: Int!
+}
+
 type Subscription {
   gameNotifications(gameId: Int): GameNotification!
+  puzzleChange(entityId: Int!): Puzzle!
 }

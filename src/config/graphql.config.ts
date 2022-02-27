@@ -25,7 +25,6 @@ export class GqlConfigService implements GqlOptionsFactory {
       path: '/api/graphql',
       routes: true,
       subscription: {
-        fullWsTransport: true,
         emitter: this.testing ? undefined : redis(this.redisOpt),
         onConnect: async ({ payload }) => {
           const ctx: Record<string, number> = {};
@@ -52,7 +51,7 @@ export class GqlConfigService implements GqlOptionsFactory {
         {
           plugin: mercuriusCache,
           options: {
-            ttl: this.configService.get<number>('ttl'),
+            ttl: 5,
             all: true,
             storage: this.testing
               ? undefined

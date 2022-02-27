@@ -59,7 +59,7 @@ export class GameEntity extends LocalBaseEntity {
   @Field(() => GameWinnerEnum)
   @Enum({
     items: () => GameWinnerEnum,
-    columnType: 'varchar(10)',
+    columnType: 'varchar(18)',
     default: GameWinnerEnum.unsettled,
   })
   @IsEnum(GameWinnerEnum)

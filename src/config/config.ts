@@ -14,7 +14,6 @@ export interface ISingleJwt {
 export interface IJwt {
   access: ISingleJwt;
   refresh: ISingleJwt;
-  wsAccess: ISingleJwt;
 }
 
 interface IEmailAuth {
@@ -58,10 +57,6 @@ export const config = (): IConfig => {
       refresh: {
         secret: process.env.JWT_REFRESH_SECRET,
         time: parseInt(process.env.JWT_REFRESH_TIME, 10),
-      },
-      wsAccess: {
-        secret: process.env.JWT_ACCESS_SECRET,
-        time: parseInt(process.env.JWT_WS_ACCESS_TIME, 10),
       },
     },
     emailService: {

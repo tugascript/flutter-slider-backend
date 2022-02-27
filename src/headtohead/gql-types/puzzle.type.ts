@@ -1,22 +1,25 @@
-import { Field, ObjectType } from '@nestjs/graphql';
-import { PuzzleStatusEnum } from '../enum/puzzle-status.enum';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { IPuzzleConstructor } from '../interfaces/puzzle-constructor.interface';
 import { PieceType } from './piece.type';
 import { PositionType } from './position.type';
 
-@ObjectType('Game')
+@ObjectType('Puzzle')
 export class PuzzleType {
   @Field(() => [[PieceType]])
   public puzzle!: PieceType[][];
 
-  @Field(() => PuzzleStatusEnum)
-  public status!: PuzzleStatusEnum;
+  @Field(() => Boolean)
+  public completed = false;
 
   @Field(() => PositionType)
   public next!: PositionType;
 
-  constructor({ puzzle, status, next }: PuzzleType) {
+  @Field(() => Int)
+  public time!: number;
+
+  constructor({ puzzle, next, time }: IPuzzleConstructor) {
     this.puzzle = puzzle;
-    this.status = status;
     this.next = next;
+    this.time = time;
   }
 }
