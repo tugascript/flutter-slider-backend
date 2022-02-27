@@ -95,8 +95,8 @@ enum GameStatus {
 }
 
 enum GameWinner {
-  default_host
-  default_challenger
+  defaultHost
+  defaultChallenger
   host
   challenger
   unsettled

@@ -1,8 +1,8 @@
 import { registerEnumType } from '@nestjs/graphql';
 
 export enum GameWinnerEnum {
-  default_host = 'default_host',
-  default_challenger = 'default_challenger',
+  defaultHost = 'defaultHost',
+  defaultChallenger = 'defaultChallenger',
   host = 'host',
   challenger = 'challenger',
   unsettled = 'unsettled',
