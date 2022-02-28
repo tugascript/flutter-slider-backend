@@ -19,7 +19,6 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.enableCors({
     credentials: true,
-    origin: configService.get<string>('url'),
   });
   app.register(fastifyHelmet);
   app.register(cookieParser);
