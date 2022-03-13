@@ -5,6 +5,7 @@ import { IPaginated } from '../common/interfaces/paginated.interface';
 import { GetRecordsDto } from './dtos/get-records.dto';
 import { LevelDto } from './dtos/level.dto';
 import { RecordEntity } from './entities/record.entity';
+import { HighScoresType } from './gql-types/high-scores.type';
 import { PaginatedRecordsType } from './gql-types/paginated-records.type';
 import { RecordInput } from './inputs/record.input';
 import { RecordsService } from './records.service';
@@ -30,10 +31,11 @@ export class RecordsResolver {
   }
 
   @Public()
-  @Query(() => PaginatedRecordsType)
+  @Query(() => HighScoresType)
   public async getHighScores(
     @Args() dto: LevelDto,
-  ): Promise<IPaginated<RecordEntity>> {
-    return this.recordsService.getHighScores(dto);
+    @CurrentUser() userId?: number,
+  ): Promise<HighScoresType> {
+    return this.recordsService.getHighScores(dto, userId);
   }
 }

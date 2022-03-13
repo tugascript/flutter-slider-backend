@@ -80,12 +80,18 @@ type PaginatedImages {
   pageInfo: PageInfo!
 }
 
+type HighScores {
+  records: PaginatedRecords!
+  currentRecord: Record
+  currentRank: Int
+}
+
 type Query {
   me: User!
   getUser(username: String!): User!
   getUsers(after: String, first: Int = 10, search: String, cursor: UsersCursor = DATE, order: QueryOrder = DESC): PaginatedUsers!
   getRecords(after: String, first: Int = 10, userId: Int!, level: Int!, order: QueryOrder = ASC): PaginatedRecords!
-  getHighScores(after: String, first: Int = 10, level: Int!): PaginatedRecords!
+  getHighScores(after: String, first: Int = 10, level: Int!): HighScores!
   getImages(after: String, first: Int = 10): PaginatedImages!
 }
 

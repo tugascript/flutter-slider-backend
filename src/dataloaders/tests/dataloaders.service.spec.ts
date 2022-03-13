@@ -4,8 +4,10 @@ import { EntityRepository } from '@mikro-orm/sqlite';
 import { CacheModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { generateToken } from '../../auth/helpers/async-jwt';
 import { CommonModule } from '../../common/common.module';
 import { CommonService } from '../../common/common.service';
+import { QueryOrderEnum } from '../../common/enums/query-order.enum';
 import { config } from '../../config/config';
 import { MikroOrmConfig } from '../../config/mikroorm.config';
 import { validationSchema } from '../../config/validation';
@@ -82,10 +84,10 @@ describe('RecordsService', () => {
       for (let i = 0; i < 1000; i++) {
         records.push(
           recordsRepository.create({
-            level: randomNum(1, 10),
+            level: randomNum(1, 11),
             moves: randomNum(10, 500),
             time: randomNum(30, 300),
-            owner: ids[randomNum(0, 9)],
+            owner: ids[randomNum(0, 10)],
           }),
         );
       }
@@ -122,7 +124,7 @@ describe('RecordsService', () => {
 
       const recordsCountQuery = recordsRepository
         .createQueryBuilder('rc')
-        .where({ owner: userRef, level: 5 })
+        .where({ owner: userRef })
         .count('rc.id', true)
         .as('records_count');
 
@@ -154,6 +156,46 @@ describe('RecordsService', () => {
       // }
       console.log(raw);
     });
+  });
+
+  describe('maxLevel', () => {
+    it('should return an user max level', async () => {
+      const knex = recordsRepository.getKnex();
+      const recordsQuery = recordsRepository
+        .createQueryBuilder('r')
+        .select(['r.id'])
+        .where({ owner: knex.ref('u.id') })
+        .orderBy({ level: QueryOrderEnum.DESC })
+        .limit(1)
+        .getKnexQuery();
+
+      const raw = await usersRepository
+        .createQueryBuilder('u')
+        .select(['u.id', 'r.level'])
+        .leftJoin('u.records', 'r')
+        .where({
+          id: {
+            $in: ids,
+          },
+          records: {
+            id: {
+              $in: recordsQuery,
+            },
+          },
+        })
+        .execute();
+      console.log(raw);
+    });
+  });
+
+  it('should console log a token', async () => {
+    const token = await generateToken(
+      { id: ids[7] },
+      process.env.JWT_ACCESS_SECRET,
+      1000,
+    );
+    expect(token).toBeDefined();
+    console.log(token);
   });
 
   it('should be defined', () => {

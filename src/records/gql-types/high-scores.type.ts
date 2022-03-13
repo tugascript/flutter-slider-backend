@@ -12,5 +12,15 @@ export class HighScoresType {
   public currentRecord?: RecordEntity;
 
   @Field(() => Int, { nullable: true })
-  public currentPosition?: number;
+  public currentRank?: number;
+
+  constructor(
+    records: IPaginated<RecordEntity>,
+    currentRecord?: RecordEntity,
+    currentRank?: number,
+  ) {
+    this.records = records;
+    this.currentRecord = currentRecord;
+    this.currentRank = currentRank;
+  }
 }

@@ -1,3 +1,3 @@
-export const contextToUser = (ctx: Record<string, any>): number => {
-  return ctx.user;
+export const contextToUser = (ctx: Record<string, any>): number | undefined => {
+  return ctx.reply?.request?.user;
 };

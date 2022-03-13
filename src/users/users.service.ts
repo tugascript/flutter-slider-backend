@@ -231,4 +231,8 @@ export class UsersService {
       'Username or email already exist',
     );
   }
+
+  public createQueryBuilder() {
+    return this.usersRepository.createQueryBuilder(USER_ALIAS);
+  }
 }

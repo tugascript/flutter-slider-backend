@@ -68,6 +68,10 @@ export class GqlConfigService implements GqlOptionsFactory {
             loader: this.dataloadersService.userRecordsLoader(),
             opts: { cache: true },
           },
+          maxLevel: {
+            loader: this.dataloadersService.userMaxLevelLoader(),
+            opts: { cache: true },
+          },
         },
       },
     };

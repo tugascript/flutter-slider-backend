@@ -14,6 +14,7 @@ import { UserEntity } from '../../users/entities/user.entity';
 @ObjectType('Record')
 @Entity({ tableName: 'records' })
 @Index({ properties: ['time', 'moves', 'id'] })
+@Index({ properties: ['level', 'owner'] })
 export class RecordEntity extends LocalBaseEntity {
   [OptionalProps]?: 'id' | 'createdAt' | 'updatedAt' | 'performance';
 

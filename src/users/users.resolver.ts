@@ -1,8 +1,14 @@
-import { Args, Mutation, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { IPaginated } from 'src/common/interfaces/paginated.interface';
+import {
+  Args,
+  Int,
+  Mutation,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
-import { FilterDto } from '../common/dtos/filter.dto';
+import { IPaginated } from '../common/interfaces/paginated.interface';
 import { PaginatedRecordsType } from '../records/gql-types/paginated-records.type';
 import { FilterUserRecordsDto } from './dtos/filter-user-records.dto';
 import { GetUserDto } from './dtos/get-user.dto';
@@ -50,13 +56,18 @@ export class UsersResolver {
   }
 
   //____________________ RESOLVE FIELDS ____________________
+  // LOGIC INSIDE DATALOADERS
 
-  // Logic Inside Loaders
   @ResolveField('records', () => PaginatedRecordsType)
   public async loadRecords(
     @Args() // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _: FilterUserRecordsDto,
   ) {
+    return;
+  }
+
+  @ResolveField('maxLevel', () => Int)
+  public async loadMaxLevel() {
     return;
   }
 }

@@ -13,6 +13,8 @@ import {
 import { UserEntity } from '../users/entities/user.entity';
 import { USER_ALIAS } from '../users/utilities/users.contants';
 import { IRecordOwnerQuery } from './interfaces/record-owner-query.interface';
+import { IUserMaxLevelQuery } from './interfaces/user-max-level-query.interface';
+import { IUserMaxLevelRaw } from './interfaces/user-max-level-raw.interface';
 import { IUsersRecordsQuery } from './interfaces/users-records-query.interface';
 
 @Injectable()
@@ -45,8 +47,8 @@ export class DataloadersService {
 
       const recordsQuery = this.recordsRepository
         .createQueryBuilder(RECORD_ALIAS)
-        .select([recordId, `${RECORD_ALIAS}.performance`])
-        .where({ owner: userRef, level: level })
+        .select([recordId, `${RECORD_ALIAS}.${RECORD_MAIN_COLUMN}`])
+        .where({ owner: userRef, level })
         .getKnexQuery();
 
       const knexQb = knex
@@ -54,30 +56,32 @@ export class DataloadersService {
         .select('id')
         .from(recordsQuery)
         .orderBy(RECORD_MAIN_COLUMN, orderCode)
-        .limit(10);
+        .limit(first);
 
       const recordsCountQuery = this.recordsRepository
         .createQueryBuilder(RECORD_COUNT_ALIAS)
-        .where({ owner: userRef, level: 5 })
+        .where({ owner: userRef, level })
         .count(`${RECORD_COUNT_ALIAS}.id`, true)
         .as('records_count');
 
-      const raw: any[] = await this.usersRepository
-        .createQueryBuilder('u')
-        .select(['u.id', recordsCountQuery])
-        .leftJoinAndSelect('u.records', 'r')
-        .groupBy(['u.id', 'r.id'])
-        .where({
-          id: {
-            $in: ids,
-          },
-          records: {
+      const raw: any[] = await this.commonService.throwInternalError(
+        this.usersRepository
+          .createQueryBuilder(USER_ALIAS)
+          .select([userId, recordsCountQuery])
+          .leftJoinAndSelect(`${USER_ALIAS}.records`, RECORD_ALIAS)
+          .groupBy([userId, recordId])
+          .where({
             id: {
-              $in: knexQb,
+              $in: ids,
             },
-          },
-        })
-        .execute();
+            records: {
+              id: {
+                $in: knexQb,
+              },
+            },
+          })
+          .execute(),
+      );
 
       for (let i = 0; i < raw.length; i++) {
         const { records, records_count, id } = raw[i];
@@ -115,7 +119,7 @@ export class DataloadersService {
   }
 
   public recordOwnerLoader() {
-    return async (queries: IRecordOwnerQuery[]) => {
+    return async (queries: IRecordOwnerQuery[]): Promise<UserEntity[]> => {
       const ids: number[] = [];
 
       for (let i = 0; i < queries.length; i++) {
@@ -140,6 +144,62 @@ export class DataloadersService {
       for (let i = 0; i < ids.length; i++) {
         const id = ids[i];
         result.push(usersMap.get(id));
+      }
+
+      return result;
+    };
+  }
+
+  public userMaxLevelLoader() {
+    return async (queries: IUserMaxLevelQuery[]): Promise<number[]> => {
+      const ids: number[] = [];
+      const levelMap = new Map<number, number>();
+      const userId = `${USER_ALIAS}.id`;
+      const recordId = `${RECORD_ALIAS}.id`;
+      const knex = this.recordsRepository.getKnex();
+
+      for (let i = 0; i < queries.length; i++) {
+        const userId = queries[i].obj.id;
+        ids.push(userId);
+      }
+
+      const recordsQuery = this.recordsRepository
+        .createQueryBuilder(RECORD_ALIAS)
+        .select([recordId])
+        .where({ owner: knex.ref(userId) })
+        .orderBy({ level: QueryOrderEnum.DESC })
+        .limit(1)
+        .getKnexQuery();
+
+      const raw: IUserMaxLevelRaw[] =
+        await this.commonService.throwInternalError(
+          this.usersRepository
+            .createQueryBuilder(USER_ALIAS)
+            .select([userId, `${RECORD_ALIAS}.level`])
+            .leftJoin('u.records', RECORD_ALIAS)
+            .where({
+              id: {
+                $in: ids,
+              },
+              records: {
+                id: {
+                  $in: recordsQuery,
+                },
+              },
+            })
+            .execute(),
+        );
+
+      for (let i = 0; i < raw.length; i++) {
+        const { id, level } = raw[i];
+        levelMap.set(id, level);
+      }
+
+      const result: number[] = [];
+
+      for (let i = 0; i < ids.length; i++) {
+        const level = levelMap.get(ids[i]);
+        result.push(level ?? 0);
       }
 
       return result;

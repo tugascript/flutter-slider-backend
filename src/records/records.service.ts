@@ -9,9 +9,11 @@ import { UsersService } from '../users/users.service';
 import { GetRecordsDto } from './dtos/get-records.dto';
 import { LevelDto } from './dtos/level.dto';
 import { RecordEntity } from './entities/record.entity';
+import { HighScoresType } from './gql-types/high-scores.type';
 import { RecordInput } from './inputs/record.input';
 import {
   RECORD_ALIAS,
+  RECORD_KEYS,
   RECORD_MAIN_COLUMN,
 } from './utilities/records.constants';
 
@@ -71,20 +73,96 @@ export class RecordsService {
   }
 
   /**
-   * Get High Scores
+   * Get Hight Scores
    *
-   * Loads records ordered by performance distinct by level and owner
+   * Gets the high score type.
    */
-  public async getHighScores({
-    level,
-    first,
-    after,
-  }: LevelDto): Promise<IPaginated<RecordEntity>> {
-    return await this.getPaginatedResults(
-      { level },
-      QueryOrderEnum.ASC,
-      first,
-      after,
+  public async getHighScores(
+    { level, first, after }: LevelDto,
+    userId?: number,
+  ): Promise<HighScoresType> {
+    const knex = this.recordsRepository.getKnex();
+
+    const knexQuery = this.recordsRepository
+      .createQueryBuilder(RECORD_ALIAS)
+      .select(
+        [
+          ...RECORD_KEYS,
+          'row_number() over (partition by `r`.owner_id order by `r`.time, `r`.moves, `r`.id) as row_number',
+        ],
+        true,
+      )
+      .where({ level })
+      .getKnexQuery();
+
+    const knexQb = knex
+      .queryBuilder()
+      .select('*')
+      .where('row_number', '=', 1)
+      .from(knexQuery)
+      .orderBy(RECORD_MAIN_COLUMN, 'asc');
+
+    const knexCountQb = knex
+      .queryBuilder()
+      .countDistinct(RECORD_MAIN_COLUMN, { as: 'count' })
+      .where('row_number', '=', 1)
+      .from(knexQuery);
+
+    if (after) {
+      const cursor = this.commonService.decodeCursor(after, true);
+      knexQb.where(RECORD_MAIN_COLUMN, '>', cursor);
+      knexCountQb.where(RECORD_MAIN_COLUMN, '>', cursor);
+    }
+
+    const [countResult, raw] = await this.commonService.throwInternalError(
+      Promise.all([knexCountQb, knexQb.limit(first)]),
+    );
+    const records: RecordEntity[] = [];
+
+    for (let i = 0; i < raw.length; i++) {
+      records.push(this.recordsRepository.map(raw[i]));
+    }
+
+    let currentRecord: RecordEntity;
+    let currentRank: number;
+
+    if (userId) {
+      const singleRaw = await this.commonService.throwInternalError(
+        knex
+          .queryBuilder()
+          .select('*')
+          .where('row_number', '=', 1)
+          .andWhere('owner_id', '=', userId)
+          .from(knexQuery)
+          .orderBy(RECORD_MAIN_COLUMN, 'asc')
+          .limit(1),
+      );
+
+      if (singleRaw.length > 0)
+        currentRecord = this.recordsRepository.map(singleRaw[0]);
+
+      if (currentRecord) {
+        const singleCount = await this.commonService.throwInternalError(
+          knex
+            .queryBuilder()
+            .countDistinct(RECORD_MAIN_COLUMN, { as: 'count' })
+            .where('row_number', '=', 1)
+            .andWhere(RECORD_MAIN_COLUMN, '<=', currentRecord?.performance ?? 0)
+            .from(knexQuery),
+        );
+        currentRank = singleCount[0].count as number;
+      }
+    }
+
+    return new HighScoresType(
+      this.commonService.paginate(
+        records,
+        countResult[0].count as number,
+        'performance',
+        first,
+      ),
+      currentRecord,
+      currentRank,
     );
   }
 
