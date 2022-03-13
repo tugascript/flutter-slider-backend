@@ -2,6 +2,16 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Record {
+  id: Int!
+  createdAt: String!
+  updatedAt: String!
+  level: Int!
+  moves: Int!
+  time: Int!
+  owner: User!
+}
+
 type User {
   id: Int!
   createdAt: String!
@@ -12,21 +22,12 @@ type User {
   maxLevel: Int!
   lastLogin: String!
   lastOnline: String!
-  records(after: String, first: Int = 10, order: QueryOrder = DESC): PaginatedRecords!
+  records(level: Int!, first: Int = 10, order: QueryOrder = ASC): PaginatedRecords!
 }
 
 enum QueryOrder {
   ASC
   DESC
-}
-
-type Record {
-  id: Int!
-  createdAt: String!
-  updatedAt: String!
-  level: Int!
-  moves: Int!
-  time: Int!
 }
 
 type PageInfo {
@@ -42,6 +43,17 @@ type RecordEntityPageEdge {
 type PaginatedRecords {
   totalCount: Int!
   edges: [RecordEntityPageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type UserEntityPageEdge {
+  cursor: String!
+  node: User!
+}
+
+type PaginatedUsers {
+  totalCount: Int!
+  edges: [UserEntityPageEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -68,113 +80,25 @@ type PaginatedImages {
   pageInfo: PageInfo!
 }
 
-type Game {
-  id: Int!
-  createdAt: String!
-  updatedAt: String!
-  difficulty: Difficulty!
-  level: Int!
-  status: GameStatus!
-  winner: GameWinner!
-  image: String!
-  time: Int!
-  host: User!
-  challenger: User!
-}
-
-enum Difficulty {
-  easy
-  medium
-  hard
-}
-
-enum GameStatus {
-  new
-  on
-  done
-}
-
-enum GameWinner {
-  defaultHost
-  defaultChallenger
-  host
-  challenger
-  unsettled
-  draw
-}
-
-type GameEntityNotificationEdge {
-  cursor: String!
-  node: Game!
-}
-
-type GameNotification {
-  type: NotificationType!
-  edge: GameEntityNotificationEdge!
-}
-
-enum NotificationType {
-  NEW
-  UPDATE
-  DELETE
-}
-
-type GameEntityPageEdge {
-  cursor: String!
-  node: Game!
-}
-
-type PaginatedGames {
-  totalCount: Int!
-  edges: [GameEntityPageEdge!]!
-  pageInfo: PageInfo!
-}
-
-type Position {
-  row: Int!
-  column: Int!
-}
-
-type Piece {
-  position: Position!
-  empty: Boolean!
-}
-
-type Puzzle {
-  puzzle: [[Piece!]!]!
-  completed: Boolean!
-  next: Position!
-  time: Int!
-}
-
 type Query {
   me: User!
   getUser(username: String!): User!
-  getRecords(input: GetRecordsInput!): PaginatedRecords!
+  getUsers(after: String, first: Int = 10, search: String, cursor: UsersCursor = DATE, order: QueryOrder = DESC): PaginatedUsers!
+  getRecords(after: String, first: Int = 10, userId: Int!, level: Int!, order: QueryOrder = ASC): PaginatedRecords!
+  getHighScores(after: String, first: Int = 10, level: Int!): PaginatedRecords!
   getImages(after: String, first: Int = 10): PaginatedImages!
-  getNewGames(after: String, first: Int = 10, search: String): PaginatedGames!
-  getGameRecords(after: String, first: Int = 10, order: QueryOrder = DESC): PaginatedGames!
 }
 
-input GetRecordsInput {
-  userId: Int!
-  level: Int
-  order: QueryOrder = DESC
+enum UsersCursor {
+  DATE
+  ALPHABET
 }
 
 type Mutation {
   updateProfilePicture(picture: Upload!): User!
-  testFileUpload(file: Upload!): String!
   addRecord(input: RecordInput!): Record!
   addImage(image: Upload!): Image!
   deleteImage(imageId: Int!): Message!
-  newGame(input: GameInput!): Game!
-  deleteGame(entityId: Int!): Message!
-  joinGame(entityId: Int!): Game!
-  kickChallenger(entityId: Int!): Game!
-  finishGame(input: EndGameInput!): Game!
-  startPuzzle(entityId: Int!): Puzzle!
-  movePiece(input: PositionInput!): Puzzle!
 }
 
 """The `Upload` scalar type represents a file upload."""
@@ -184,27 +108,4 @@ input RecordInput {
   level: Int!
   moves: Int!
   time: Int!
-}
-
-input GameInput {
-  difficulty: Difficulty!
-  level: Int!
-  image: Upload!
-}
-
-input EndGameInput {
-  gameId: Int!
-  time: Int!
-  winner: GameWinner!
-}
-
-input PositionInput {
-  gameId: Int!
-  row: Int!
-  column: Int!
-}
-
-type Subscription {
-  gameNotifications(gameId: Int): GameNotification!
-  puzzleChange(entityId: Int!): Puzzle!
 }

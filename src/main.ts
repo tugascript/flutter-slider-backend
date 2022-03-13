@@ -6,6 +6,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import cookieParser from 'fastify-cookie';
+import cors from 'fastify-cors';
 import { fastifyHelmet } from 'fastify-helmet';
 import { UploadOptions } from 'graphql-upload';
 import MercuriusGQLUpload from 'mercurius-upload';
@@ -17,7 +18,7 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
   const configService = app.get(ConfigService);
-  app.enableCors({
+  app.register(cors, {
     credentials: true,
   });
   app.register(fastifyHelmet);

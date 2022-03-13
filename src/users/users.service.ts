@@ -15,12 +15,13 @@ import { ITokenPayload } from '../auth/interfaces/token-payload.interface';
 import { CommonService } from '../common/common.service';
 import { LocalMessageType } from '../common/gql-types/message.type';
 import { IPaginated } from '../common/interfaces/paginated.interface';
-import { tLikeOperator } from '../config/config';
+import { tLikeOperator } from '../config/interfaces/config.interface';
 import { UploaderService } from '../uploader/uploader.service';
 import { GetUsersDto } from './dtos/get-users.dto';
 import { ProfilePictureDto } from './dtos/profile-picture.dto';
 import { UserEntity } from './entities/user.entity';
 import { getUserCursor } from './enums/users-cursor.enum';
+import { USER_ALIAS } from './utilities/users.contants';
 
 @Injectable()
 export class UsersService {
@@ -166,6 +167,20 @@ export class UsersService {
   }
 
   /**
+   * Get User By Ids
+   *
+   * Get users in an ids array
+   */
+  public async getUsersByIds(ids: number[]): Promise<UserEntity[]> {
+    const users = await this.usersRepository.find({
+      id: {
+        $in: ids,
+      },
+    });
+    return users;
+  }
+
+  /**
    * Find Users
    *
    * Search users usernames and returns paginated results
@@ -177,17 +192,18 @@ export class UsersService {
     first,
     after,
   }: GetUsersDto): Promise<IPaginated<UserEntity>> {
-    const name = 'u';
+    const qb = this.usersRepository.createQueryBuilder(USER_ALIAS);
 
-    const qb = this.usersRepository.createQueryBuilder(name).where({
-      confirmed: true,
-      name: {
-        [this.likeOperator]: this.commonService.formatSearch(search),
-      },
-    });
+    if (search) {
+      qb.where({
+        name: {
+          [this.likeOperator]: this.commonService.formatSearch(search),
+        },
+      });
+    }
 
     return await this.commonService.queryBuilderPagination(
-      name,
+      USER_ALIAS,
       getUserCursor(cursor),
       first,
       order,

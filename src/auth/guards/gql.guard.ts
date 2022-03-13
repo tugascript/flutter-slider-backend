@@ -18,18 +18,7 @@ export class GraphQLAuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    const ctxType = context.getType();
-    let request: IExtendedRequest;
-
-    if (ctxType === 'http') {
-      request = context.switchToHttp().getRequest();
-    } else if ((ctxType as string) === 'graphql') {
-      const gqlCtx = GqlExecutionContext.create(context).getContext();
-
-      if (gqlCtx.user) return true;
-
-      request = gqlCtx?.reply?.request;
-    }
+    const request = this.getRequest(context);
 
     if (!request) return isPublic;
 
@@ -48,5 +37,13 @@ export class GraphQLAuthGuard implements CanActivate {
     } catch (_) {
       return isPublic;
     }
+  }
+
+  private getRequest(context: ExecutionContext): IExtendedRequest | undefined {
+    if (context.getType() === 'http') {
+      return context.switchToHttp().getRequest();
+    }
+
+    return GqlExecutionContext.create(context).getContext()?.reply?.request;
   }
 }

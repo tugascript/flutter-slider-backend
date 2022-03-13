@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, OptionalProps } from '@mikro-orm/core';
+import { Entity, ManyToOne, OptionalProps, Property } from '@mikro-orm/core';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { IsNotEmpty, IsString, IsUrl } from 'class-validator';
 import { LocalBaseEntity } from '../../common/entities/base.entity';
@@ -9,6 +9,7 @@ import { UserEntity } from '../../users/entities/user.entity';
 export class ImageEntity extends LocalBaseEntity {
   [OptionalProps]?: 'id' | 'createdAt' | 'updatedAt';
 
+  @Property({ columnType: 'varchar(255)' })
   @Field(() => String)
   @IsString()
   @IsUrl()

@@ -1,5 +1,6 @@
 import {
   Entity,
+  Formula,
   Index,
   ManyToOne,
   OptionalProps,
@@ -11,8 +12,8 @@ import { LocalBaseEntity } from '../../common/entities/base.entity';
 import { UserEntity } from '../../users/entities/user.entity';
 
 @ObjectType('Record')
-@Index({ properties: ['time', 'moves', 'id'] })
 @Entity({ tableName: 'records' })
+@Index({ properties: ['time', 'moves', 'id'] })
 export class RecordEntity extends LocalBaseEntity {
   [OptionalProps]?: 'id' | 'createdAt' | 'updatedAt' | 'performance';
 
@@ -34,14 +35,10 @@ export class RecordEntity extends LocalBaseEntity {
   @Property({ columnType: 'int' })
   public time!: number;
 
-  // Indexes
-
-  @Index()
-  @Property()
+  @Formula((a) => `row_number() over (order by ${a}.time, ${a}.moves, ${a}.id)`)
   public performance?: number;
 
-  // Relations
-
+  @Field(() => UserEntity)
   @ManyToOne({
     entity: () => UserEntity,
     inversedBy: (u) => u.records,

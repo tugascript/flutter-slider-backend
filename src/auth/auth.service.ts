@@ -11,7 +11,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { v5 as uuidV5 } from 'uuid';
 import { CommonService } from '../common/common.service';
 import { LocalMessageType } from '../common/gql-types/message.type';
-import { IJwt, ISingleJwt } from '../config/config';
+import { IJwt, ISingleJwt } from '../config/interfaces/jwt.interface';
 import { EmailService } from '../email/email.service';
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';

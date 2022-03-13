@@ -1,53 +1,10 @@
-import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
-import { S3ClientConfig } from '@aws-sdk/client-s3';
-import { UploadOptions } from 'graphql-upload';
 import { LoadStrategy } from '@mikro-orm/core';
-import { RedisOptions } from 'ioredis';
+import { IConfig } from './interfaces/config.interface';
 
-export type tLikeOperator = '$ilike' | '$like';
-
-export interface ISingleJwt {
-  secret: string;
-  time: number;
-}
-
-export interface IJwt {
-  access: ISingleJwt;
-  refresh: ISingleJwt;
-}
-
-interface IEmailAuth {
-  user: string;
-  pass: string;
-}
-
-export interface IEmailConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: IEmailAuth;
-}
-
-export interface IConfig {
-  port: number;
-  playground: boolean;
-  url: string;
-  db: MikroOrmModuleOptions;
-  jwt: IJwt;
-  emailService: IEmailConfig;
-  bucketConfig: S3ClientConfig;
-  redis: RedisOptions | null;
-  ttl: number;
-  upload: UploadOptions;
-  testing: boolean;
-  likeOperator: tLikeOperator;
-}
-
-export const config = (): IConfig => {
+export function config(): IConfig {
   const TESTING = process.env.NODE_ENV !== 'production';
   return {
     port: parseInt(process.env.PORT, 10),
-    playground: process.env.PLAYGROUND === 'true',
     url: process.env.URL,
     jwt: {
       access: {
@@ -112,4 +69,4 @@ export const config = (): IConfig => {
     testing: TESTING,
     likeOperator: TESTING ? '$like' : '$ilike',
   };
-};
+}

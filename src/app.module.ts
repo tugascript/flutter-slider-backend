@@ -17,7 +17,8 @@ import { UploaderModule } from './uploader/uploader.module';
 import { UsersModule } from './users/users.module';
 import { RecordsModule } from './records/records.module';
 import { ImagesModule } from './images/images.module';
-import { HeadtoheadModule } from './headtohead/headtohead.module';
+import { UserEntity } from './users/entities/user.entity';
+import { RecordEntity } from './records/entities/record.entity';
 
 @Module({
   imports: [
@@ -36,7 +37,10 @@ import { HeadtoheadModule } from './headtohead/headtohead.module';
       useClass: CacheConfig,
     }),
     GraphQLModule.forRootAsync({
-      imports: [ConfigModule, AuthModule],
+      imports: [
+        ConfigModule,
+        MikroOrmModule.forFeature([UserEntity, RecordEntity]),
+      ],
       driver: GraphQLDriver,
       useClass: GqlConfigService,
     }),
@@ -47,7 +51,6 @@ import { HeadtoheadModule } from './headtohead/headtohead.module';
     UploaderModule,
     RecordsModule,
     ImagesModule,
-    HeadtoheadModule,
   ],
   providers: [
     {
