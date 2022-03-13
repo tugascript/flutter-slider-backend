@@ -12,13 +12,12 @@ import { GqlConfigService } from './config/graphql.config';
 import { GraphQLDriver } from './config/graphql.driver';
 import { MikroOrmConfig } from './config/mikroorm.config';
 import { validationSchema } from './config/validation';
+import { DataloadersModule } from './dataloaders/dataloaders.module';
 import { EmailModule } from './email/email.module';
+import { ImagesModule } from './images/images.module';
+import { RecordsModule } from './records/records.module';
 import { UploaderModule } from './uploader/uploader.module';
 import { UsersModule } from './users/users.module';
-import { RecordsModule } from './records/records.module';
-import { ImagesModule } from './images/images.module';
-import { UserEntity } from './users/entities/user.entity';
-import { RecordEntity } from './records/entities/record.entity';
 
 @Module({
   imports: [
@@ -37,13 +36,11 @@ import { RecordEntity } from './records/entities/record.entity';
       useClass: CacheConfig,
     }),
     GraphQLModule.forRootAsync({
-      imports: [
-        ConfigModule,
-        MikroOrmModule.forFeature([UserEntity, RecordEntity]),
-      ],
+      imports: [ConfigModule, DataloadersModule],
       driver: GraphQLDriver,
       useClass: GqlConfigService,
     }),
+    DataloadersModule,
     UsersModule,
     CommonModule,
     AuthModule,
