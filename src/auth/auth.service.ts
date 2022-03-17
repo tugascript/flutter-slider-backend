@@ -43,7 +43,6 @@ export class AuthService {
   private readonly cookieName =
     this.configService.get<string>('REFRESH_COOKIE');
   private readonly authNamespace = this.configService.get<string>('AUTH_UUID');
-  private readonly testing = this.configService.get<boolean>('testing');
 
   //____________________ MUTATIONS ____________________
 
@@ -251,7 +250,7 @@ export class AuthService {
    */
   private saveRefreshCookie(res: FastifyReply, token: string): void {
     res.cookie(this.cookieName, token, {
-      secure: !this.testing,
+      secure: true,
       httpOnly: true,
       path: '/api/auth/refresh-access',
       expires: new Date(Date.now() + 604800000),

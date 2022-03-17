@@ -15,7 +15,6 @@ import { ITokenPayload } from '../auth/interfaces/token-payload.interface';
 import { CommonService } from '../common/common.service';
 import { LocalMessageType } from '../common/gql-types/message.type';
 import { IPaginated } from '../common/interfaces/paginated.interface';
-import { tLikeOperator } from '../config/interfaces/config.interface';
 import { UploaderService } from '../uploader/uploader.service';
 import { GetUsersDto } from './dtos/get-users.dto';
 import { ProfilePictureDto } from './dtos/profile-picture.dto';
@@ -35,8 +34,6 @@ export class UsersService {
     private readonly cacheManager: Cache,
   ) {}
 
-  private readonly likeOperator =
-    this.configService.get<tLikeOperator>('likeOperator');
   private readonly wsNamespace = this.configService.get<string>('WS_UUID');
   private readonly cookieName =
     this.configService.get<string>('REFRESH_COOKIE');
@@ -196,8 +193,8 @@ export class UsersService {
 
     if (search) {
       qb.where({
-        name: {
-          [this.likeOperator]: this.commonService.formatSearch(search),
+        username: {
+          $like: this.commonService.formatSearch(search),
         },
       });
     }

@@ -7,6 +7,6 @@ export abstract class LevelDto extends PaginationDto {
   @Field(() => Int)
   @IsInt()
   @Min(1)
-  @Max(10)
+  @Max(25)
   public level!: number;
 }

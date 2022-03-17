@@ -14,14 +14,10 @@ export class CacheConfig implements CacheOptionsFactory {
   createCacheOptions(): CacheModuleOptions {
     const ttl = this.configService.get<number>('ttl');
 
-    return this.configService.get<boolean>('testing')
-      ? { ttl }
-      : {
-          ttl,
-          store: redisStore,
-          redisInstance: new Redis(
-            this.configService.get<RedisOptions>('redis'),
-          ),
-        };
+    return {
+      ttl,
+      store: redisStore,
+      redisInstance: new Redis(this.configService.get<RedisOptions>('redis')),
+    };
   }
 }

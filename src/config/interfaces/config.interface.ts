@@ -5,8 +5,6 @@ import { RedisOptions } from 'ioredis';
 import { IEmailConfig } from './email-config.interface';
 import { IJwt } from './jwt.interface';
 
-export type tLikeOperator = '$ilike' | '$like';
-
 export interface IConfig {
   port: number;
   url: string;
@@ -17,6 +15,4 @@ export interface IConfig {
   redis: RedisOptions | null;
   ttl: number;
   upload: UploadOptions;
-  testing: boolean;
-  likeOperator: tLikeOperator;
 }
