@@ -43,7 +43,6 @@ export class AuthService {
   private readonly cookieName =
     this.configService.get<string>('REFRESH_COOKIE');
   private readonly authNamespace = this.configService.get<string>('AUTH_UUID');
-  private readonly testing = this.configService.get<boolean>('testing');
 
   //____________________ MUTATIONS ____________________
 
@@ -123,11 +122,12 @@ export class AuthService {
     req: FastifyRequest,
     res: FastifyReply,
   ): Promise<IAuthResult> {
-    const token = req.cookies[this.cookieName];
-    if (!token) throw new UnauthorizedException('Invalid refresh token');
+    const { valid, value } = req.unsignCookie(req.cookies[this.cookieName]);
+
+    if (!valid) throw new UnauthorizedException('Invalid refresh token');
 
     const payload = (await this.verifyAuthToken(
-      token,
+      value,
       'refresh',
     )) as ITokenPayloadResponse;
     const user = await this.usersService.getUserByPayload(payload);
@@ -251,8 +251,9 @@ export class AuthService {
    */
   private saveRefreshCookie(res: FastifyReply, token: string): void {
     res.cookie(this.cookieName, token, {
-      secure: !this.testing,
+      secure: true,
       httpOnly: true,
+      signed: true,
       path: '/api/auth/refresh-access',
       expires: new Date(Date.now() + 604800000),
     });

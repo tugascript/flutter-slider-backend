@@ -1,11 +1,11 @@
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
-import { QueryOrderEnum } from 'src/common/enums/query-order.enum';
-import { LocalMessageType } from 'src/common/gql-types/message.type';
-import { IPaginated } from 'src/common/interfaces/paginated.interface';
 import { CommonService } from '../common/common.service';
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import { QueryOrderEnum } from '../common/enums/query-order.enum';
+import { LocalMessageType } from '../common/gql-types/message.type';
+import { IPaginated } from '../common/interfaces/paginated.interface';
 import { UploaderService } from '../uploader/uploader.service';
 import { DeleteImageDto } from './dto/delete-image.dto';
 import { ImageUploadDto } from './dto/image-upload.dto';
