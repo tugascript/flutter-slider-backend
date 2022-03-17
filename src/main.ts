@@ -21,7 +21,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.register(cors, {
     credentials: true,
-    origin: 'https://slider.tugascript.com',
+    origin: configService.get<string>('URL'),
   });
   app.register(fastifyHelmet);
   app.register(cookieParser, {

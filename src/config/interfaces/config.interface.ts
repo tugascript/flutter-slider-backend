@@ -6,7 +6,6 @@ import { IJwt } from './jwt.interface';
 
 export interface IConfig {
   port: number;
-  url: string;
   db: MikroOrmModuleOptions;
   jwt: IJwt;
   emailService: IEmailConfig;

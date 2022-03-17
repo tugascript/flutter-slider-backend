@@ -3,7 +3,6 @@ import { IConfig } from './interfaces/config.interface';
 
 export const config = (): IConfig => ({
   port: parseInt(process.env.PORT, 10),
-  url: process.env.URL,
   jwt: {
     access: {
       secret: process.env.JWT_ACCESS_SECRET,
