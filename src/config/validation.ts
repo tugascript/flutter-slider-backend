@@ -14,6 +14,7 @@ export const validationSchema = Joi.object({
   JWT_REFRESH_SECRET: Joi.string().required(),
   JWT_REFRESH_TIME: Joi.number().required(),
   REFRESH_COOKIE: Joi.string().required(),
+  COOKIE_SECRET: Joi.string().required(),
   EMAIL_HOST: Joi.string().required(),
   EMAIL_PORT: Joi.number().required(),
   EMAIL_SECURE: Joi.bool().required(),

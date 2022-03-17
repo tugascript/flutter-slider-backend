@@ -122,11 +122,12 @@ export class AuthService {
     req: FastifyRequest,
     res: FastifyReply,
   ): Promise<IAuthResult> {
-    const token = req.cookies[this.cookieName];
-    if (!token) throw new UnauthorizedException('Invalid refresh token');
+    const { valid, value } = req.unsignCookie(req.cookies[this.cookieName]);
+
+    if (!valid) throw new UnauthorizedException('Invalid refresh token');
 
     const payload = (await this.verifyAuthToken(
-      token,
+      value,
       'refresh',
     )) as ITokenPayloadResponse;
     const user = await this.usersService.getUserByPayload(payload);
@@ -252,6 +253,7 @@ export class AuthService {
     res.cookie(this.cookieName, token, {
       secure: true,
       httpOnly: true,
+      signed: true,
       path: '/api/auth/refresh-access',
       expires: new Date(Date.now() + 604800000),
     });
