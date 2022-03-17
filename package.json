@@ -1,8 +1,8 @@
 {
-  "name": "backend",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "name": "flutter-slider-backend",
+  "version": "1.0.0",
+  "description": "Flutter Slider Backend",
+  "author": "Afonso Barracha",
   "private": true,
   "license": "MIT",
   "scripts": {
