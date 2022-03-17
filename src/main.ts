@@ -6,9 +6,9 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import cookieParser from 'fastify-cookie';
-import cors from 'fastify-cors';
+// import cors from 'fastify-cors';
 // import csrf from 'fastify-csrf';
-import { fastifyHelmet } from 'fastify-helmet';
+// import { fastifyHelmet } from 'fastify-helmet';
 import { UploadOptions } from 'graphql-upload';
 import MercuriusGQLUpload from 'mercurius-upload';
 import { AppModule } from './app.module';
@@ -19,11 +19,11 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
   const configService = app.get(ConfigService);
-  app.register(cors, {
-    credentials: true,
-    origin: configService.get<string>('URL'),
-  });
-  app.register(fastifyHelmet);
+  // app.register(cors, {
+  //   credentials: true,
+  //   origin: configService.get<string>('URL'),
+  // });
+  // app.register(fastifyHelmet);
   app.register(cookieParser, {
     secret: configService.get<string>('COOKIE_SECRET'),
   });
