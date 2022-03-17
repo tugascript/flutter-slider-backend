@@ -7,7 +7,7 @@ import {
 } from '@nestjs/platform-fastify';
 import cookieParser from 'fastify-cookie';
 import cors from 'fastify-cors';
-import csrf from 'fastify-csrf';
+// import csrf from 'fastify-csrf';
 import { fastifyHelmet } from 'fastify-helmet';
 import { UploadOptions } from 'graphql-upload';
 import MercuriusGQLUpload from 'mercurius-upload';
@@ -27,7 +27,7 @@ async function bootstrap() {
   app.register(cookieParser, {
     secret: configService.get<string>('COOKIE_SECRET'),
   });
-  app.register(csrf);
+  // app.register(csrf);
   app.register(MercuriusGQLUpload, configService.get<UploadOptions>('upload'));
   app.useGlobalPipes(new ValidationPipe());
   await app.listen(configService.get<number>('port'));
