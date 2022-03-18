@@ -140,7 +140,7 @@ export class UploaderService {
     fileBuffer: Buffer,
     fileExt: string,
   ): Promise<string> {
-    const key = userId.toString() + '_' + uuidV4() + fileExt;
+    const key = 'flutter-slider' + userId.toString() + '_' + uuidV4() + fileExt;
 
     await this.commonService.throwInternalError(
       this.client.send(
