@@ -20,6 +20,7 @@ export const validationSchema = Joi.object({
   BUCKET_SECRET_KEY: Joi.string().required(),
   BUCKET_ACCESS_KEY: Joi.string().required(),
   BUCKET_REGION: Joi.string().required(),
+  BUCKET_HOST: Joi.string().required(),
   REDIS_URL: Joi.string().required(),
   REDIS_CACHE_TTL: Joi.number().required(),
   MAX_FILE_SIZE: Joi.number().required(),

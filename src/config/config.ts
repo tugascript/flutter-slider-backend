@@ -29,7 +29,7 @@ export function config(): IConfig {
     bucketConfig: {
       forcePathStyle: false,
       region: process.env.BUCKET_REGION,
-      endpoint: `https://${process.env.BUCKET_REGION}.linodeobjects.com`,
+      endpoint: `https://${process.env.BUCKET_REGION}.${process.env.BUCKET_HOST}`,
       credentials: {
         accessKeyId: process.env.BUCKET_ACCESS_KEY,
         secretAccessKey: process.env.BUCKET_SECRET_KEY,
