@@ -35,6 +35,6 @@ async function bootstrap() {
     root: join(__dirname, '..', 'public'),
   });
   app.useGlobalPipes(new ValidationPipe());
-  await app.listen(5000);
+  await app.listen(configService.get<number>('port'));
 }
 bootstrap();

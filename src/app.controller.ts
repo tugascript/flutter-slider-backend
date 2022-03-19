@@ -6,6 +6,8 @@ import { Public } from './auth/decorators/public.decorator';
 @Controller()
 export class AppController {
   constructor(private readonly configService: ConfigService) {}
+  private readonly port = this.configService.get<number>('port');
+
   @Public()
   @Get('/favicon.ico')
   public sendFavicon(@Res() res: FastifyReply) {
@@ -15,6 +17,6 @@ export class AppController {
   @Public()
   @Get()
   public getServerRunning() {
-    return `server running on port 5000`;
+    return `server running on port ${this.port}`;
   }
 }
