@@ -30,6 +30,6 @@ async function bootstrap() {
   app.register(csrf);
   app.register(MercuriusGQLUpload, configService.get<UploadOptions>('upload'));
   app.useGlobalPipes(new ValidationPipe());
-  await app.listen(5000);
+  await app.listen(configService.get<string>('PORT'));
 }
 bootstrap();
