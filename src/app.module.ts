@@ -18,6 +18,7 @@ import { ImagesModule } from './images/images.module';
 import { RecordsModule } from './records/records.module';
 import { UploaderModule } from './uploader/uploader.module';
 import { UsersModule } from './users/users.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -55,5 +56,6 @@ import { UsersModule } from './users/users.module';
       useClass: GraphQLAuthGuard,
     },
   ],
+  controllers: [AppController],
 })
 export class AppModule {}
