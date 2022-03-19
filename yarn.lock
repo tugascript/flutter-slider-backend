@@ -3924,6 +3924,19 @@ fastify-static@^4.2.2:
     readable-stream "^3.4.0"
     send "^0.17.1"
 
+fastify-static@^4.6.1:
+  version "4.6.1"
+  resolved "https://registry.yarnpkg.com/fastify-static/-/fastify-static-4.6.1.tgz#687131da76f1d4391fb8b47f71ea2118cdc85803"
+  integrity sha512-vy7N28U4AMhuOim12ZZWHulEE6OQKtzZbHgiB8Zj4llUuUQXPka0WHAQI3njm1jTCx4W6fixUHfpITxweMtAIA==
+  dependencies:
+    content-disposition "^0.5.3"
+    encoding-negotiator "^2.0.1"
+    fastify-plugin "^3.0.0"
+    glob "^7.1.4"
+    p-limit "^3.1.0"
+    readable-stream "^3.4.0"
+    send "^0.17.1"
+
 fastify-websocket@^4.0.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/fastify-websocket/-/fastify-websocket-4.2.0.tgz#058bb05b7c2510557ed255e5202dbbac31ce68dc"
