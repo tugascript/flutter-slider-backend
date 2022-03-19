@@ -50,12 +50,12 @@ import { AppController } from './app.controller';
     RecordsModule,
     ImagesModule,
   ],
-  // providers: [
-  //   {
-  //     provide: APP_GUARD,
-  //     useClass: GraphQLAuthGuard,
-  //   },
-  // ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: GraphQLAuthGuard,
+    },
+  ],
   controllers: [AppController],
 })
 export class AppModule {}
